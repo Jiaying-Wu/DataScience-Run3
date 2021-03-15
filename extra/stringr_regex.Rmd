@@ -1,0 +1,296 @@
+---
+title: "stringr and regular expressions"
+author: "Jiaying Wu"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE,
+                      message = FALSE,
+                      error = FALSE)
+```
+
+This chapter will focus on the stringr package for string manipulation, which is part of the core tidyverse.
+
+```{r}
+library(tidyverse)
+```
+
+### 1. String basics
+
+You can create strings with either single quotes or double quotes. Yor are recommended to always use `"`, unless you want to create a string that contains multiple `"`.
+
+```{r}
+string1 <- "This is a string"
+string2 <- 'If I want to include a "quote" inside a string, I use single quotes'
+```
+
+To include a literal single or double quote in a string you can use `\` to “escape” it:
+
+```{r}
+# or '"'
+double_quote <- "\"" # or '"'
+# or "'"
+single_quote <- '\'' # or "'"
+```
+
+That means if you want to include a literal backslash, you’ll need to double it up: `"\\"`.
+
+```{r}
+x <- c("\"", "\\")
+x
+```
+
+To see the raw contents of the string, use `writeLines()`:
+
+```{r}
+writeLines(x)
+```
+
+Multiple strings are often stored in a character vector, which you can create with `c()`:
+
+```{r}
+c("one", "two", "three")
+```
+
+#### 1.1 String length
+
+`str_length()` tells you the number of characters in a string:
+
+```{r}
+str_length(c("a", "R for data science", NA))
+```
+
+The common `str_` prefix is particularly useful if you use RStudio, because typing `str_` will trigger autocomplete, allowing you to see all stringr functions:
+
+```{r eval=FALSE}
+str_
+```
+
+#### 1.2 Combining strings
+
+To combine two or more strings, use `str_c()`:
+
+```{r}
+str_c("x", "y")
+str_c("x", "y", "z")
+```
+
+Use the `sep` argument to control how they’re separated:
+
+```{r}
+str_c("x", "y", sep = ", ")
+```
+
+#### 1.3 Subsetting strings
+
+You can extract parts of a string using `str_sub()`. `str_sub()` takes `start` and `end` arguments which give the (inclusive) position of the substring:
+
+```{r}
+x <- c("Apple", "Banana", "Pear")
+str_sub(x, 1, 3)
+str_sub(x, -3, -1)
+```
+
+Note that `str_sub()` won’t fail if the string is too short: it will just return as much as possible:
+
+```{r}
+str_sub("a", 1, 5)
+```
+
+### 1.4 Locales
+
+You can use `str_to_lower()` to change the text to lower case. You can also use `str_to_upper()` or `str_to_title()`.
+
+```{r}
+str_to_lower(x)
+str_to_upper(c("a", "b"))
+```
+
+If you want robust behaviour across different computers, you may want to use str_sort() and str_order() which take an additional locale argument:
+
+```{r}
+x <- c("apple", "eggplant", "banana")
+str_sort(x, locale = "en")  # English
+str_sort(x, locale = "haw") # Hawaiian
+```
+
+### 2. Matching patterns with regular expressions
+
+Regexps are a very terse language that allow you to describe patterns in strings. To learn regular expressions, we’ll use `str_view()` and `str_view_all()`. 
+
+#### 2.1 Basic matches
+
+The simplest patterns match exact strings:
+
+```{r}
+x <- c("apple", "banana", "pear")
+str_view(x, "an")
+```
+
+The next step up in complexity is `.`, which matches any character (except a newline):
+
+```{r}
+str_view(x, ".a.")
+```
+
+Like strings, regexps use the backslash, `\`, to escape special behaviour. So to match an `.`, you need the regexp `\.`. Unfortunately this creates a problem. We use strings to represent regular expressions, and `\` is also used as an escape symbol in strings. So to create the regular expression `\.` we need the string `"\\."`.
+
+```{r}
+# To create the regular expression, we need \\
+dot <- "\\."
+
+# But the expression itself only contains one:
+writeLines(dot)
+```
+
+```{r}
+# And this tells R to look for an explicit .
+str_view(c("abc", "a.c", "bef"), "a\\.c")
+```
+
+In order to match a literal `\`,  you need to escape it, creating the regular expression `\\`. To create that regular expression, you need to use a string, which also needs to escape `\`. That means to match a literal `\` you need to write `"\\\\"`
+
+```{r}
+x <- "a\\b"
+writeLines(x)
+```
+
+```{r}
+str_view(x, "\\\\")
+```
+
+#### 2.2 Anchors
+
+You can use:
+
+- `^` to match the start of the string.
+
+- `$` to match the end of the string.
+
+```{r}
+x <- c("apple", "banana", "pear")
+str_view(x, "^a")
+```
+
+```{r}
+str_view(x, "a$")
+```
+
+To force a regular expression to only match a complete string, anchor it with both `^` and `$`:
+
+```{r}
+x <- c("apple pie", "apple", "apple cake")
+str_view(x, "apple")
+```
+
+```{r}
+str_view(x, "^apple$")
+```
+
+#### 2.3 Character classes and alternatives
+
+You’ve already seen `.`, which matches any character apart from a newline. There are four other useful tools:
+
+- `\d`: matches any digit.
+
+- `\s`: matches any whitespace (e.g. space, tab, newline).
+
+- `[abc]`: matches a, b, or c.
+
+- `[^abc]`: matches anything except a, b, or c.
+
+Remember, to create a regular expression containing `\d` or `\s`, you’ll need to escape the `\` for the string, so you’ll type `"\\d"` or `"\\s"`.
+
+```{r}
+# Look for a literal character that normally has special meaning in a regex
+str_view(c("abc", "a.c", "a*c", "a c"), "a[.]c")
+```
+
+```{r}
+str_view(c("abc", "a.c", "a*c", "a c"), ".[*]c")
+```
+
+```{r}
+str_view(c("abc", "a.c", "a*c", "a c"), "a[ ]")
+```
+
+This works for most (but not all) regex metacharacters: `$` `.` `|` `?` `*` `+` `(` `)` `[` `{`. Unfortunately, a few characters have special meaning even inside a character class and must be handled with backslash escapes: `]` `\` `^` and `-`.
+
+You can use `|` to pick between one or more alternative patterns.
+
+```{r}
+str_view(c("grey", "gray"), "gr(e|a)y")
+```
+
+#### 2.4 Repetition
+
+The next step up in power involves controlling how many times a pattern matches:
+
+- `?`: 0 or 1
+
+- `+`: 1 or more
+
+- `*`: 0 or more
+
+```{r}
+x <- "MDCCCLXXXVIII"
+str_view(x, "CC?")
+```
+
+```{r}
+str_view(x, "C+")
+```
+
+```{r}
+str_view(x, 'C[LX]+')
+```
+
+You can also specify the number of matches precisely:
+
+- `{n}`: exactly n
+
+- `{n,}`: n or more
+
+- `{,m}`: at most m
+
+- `{n,m}`: between n and m
+
+```{r}
+str_view(x, "C{2}")
+```
+
+```{r}
+str_view(x, "C{2,}")
+```
+
+```{r}
+str_view(x, "C{2,3}")
+```
+
+By default these matches are “greedy”: they will match the longest string possible. You can make them “lazy”, matching the shortest string possible by putting a `?` after them. 
+
+```{r}
+str_view(x, "C{2,3}?")
+```
+
+```{r}
+str_view(x, 'C[LX]+?')
+```
+
+#### 2.5 Grouping and backreferences
+
+Parentheses also create a numbered capturing group (number 1, 2 etc.). A **capturing group** stores the part of the string matched by the part of the regular expression inside the parentheses. You can refer to the same text as previously matched by a capturing group with **backreferences**, like `\1`, `\2` etc. 
+ 
+For example, the following regular expression finds all fruits that have a repeated pair of letters.
+
+```{r}
+str_view(fruit, "(..)\\1", match = TRUE)
+```
+
+
+### Reference
+
+Hadey, W. & Grolemund, G. (2017). R for Data Science. O’Reilly.
+
