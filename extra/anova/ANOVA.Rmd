@@ -1,11 +1,7 @@
 ---
 title: "ANOVA in simple regression tree"
 author: "Jiaying Wu"
-date: "05/05/2021"
-output:
-  html_document:
-    df_print: paged
-  pdf_document: default
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -15,9 +11,7 @@ knitr::opts_chunk$set(echo = TRUE,
                       fig.width = 6)
 ```
 
-In regression, we can use the ANOVA information criterion to find the best split that separate our data points in the head node into two nodes, that is left node and right node.
-
-![](level0.png)
+In this exercise, we add the `label` variable to the data set base on the descending order of x in order to indicate the data point in the plot, it won't affect the result.
 
 ```{r}
 library(tidyverse)
@@ -27,13 +21,15 @@ d <- tibble(x = c(1.5, 2.8, 4.1, 2.0, 5.2),
 d
 ```
 
-In this exercise, we add the `label` variable to the data set base on the descending order of x in order to indicate the data point in the plot, it won't affect the result.
-
 ```{r}
 ggplot(data = d, aes(x = x, y = y, label = label)) +
   geom_point() +
   geom_label()
 ```
+
+In regression tree, we can use the ANOVA information criterion to find the best split that separate our data points in the head node into two nodes, that is left node and right node.
+
+![](level0.png)
 
 The regression tree will go through the point `a` to point `e` base on `x` variable to find the best split in this simple regression tree. 
 
@@ -104,7 +100,7 @@ Base on the ANOVA value, the ANOVA maximize when we split the data with `x <= 2.
 ggplot(data = d, aes(x = x, y = y, label = label)) +
   geom_point() +
   geom_label() +
-  geom_vline(xintercept = 2.0, color = "red")
+  geom_vline(xintercept = (2.0 + 2.8) / 2, color = "red")
 ```
 
 ![](level1.png)
@@ -134,8 +130,8 @@ Since the ANOVA is 0.405, it larger than 0, we split the data point base on `x <
 ggplot(data = d, aes(x = x, y = y, label = label)) +
   geom_point() +
   geom_label() +
-  geom_vline(xintercept = 2.0, color = "red") +
-  geom_vline(xintercept = 1.5, color = "blue")
+  geom_vline(xintercept = (2.0 + 2.8) / 2, color = "red") +
+  geom_vline(xintercept = (1.5 + 2.0) / 2, color = "blue")
 ```
 
 For Level 1 right node, we only 2 attempt since we have 3 data points in the head node.
@@ -163,9 +159,9 @@ Base on the ANOVA value, the ANOVA maximize when we split the data with `x <= 4.
 ggplot(data = d, aes(x = x, y = y, label = label)) +
   geom_point() +
   geom_label() +
-  geom_vline(xintercept = 2.0, color = "red") +
-  geom_vline(xintercept = 1.5, color = "blue") +
-  geom_vline(xintercept = 4.1, color = "blue")
+  geom_vline(xintercept = (2.0 + 2.8) / 2, color = "red") +
+  geom_vline(xintercept = (1.5 + 2.0) / 2, color = "blue") +
+  geom_vline(xintercept = (4.1 + 5.2) / 2, color = "blue")
 ```
 
 ![](level2.png)
@@ -197,12 +193,17 @@ Since the ANOVA is 0.045, it larger than 0, we split the data point base on `x <
 ggplot(data = d, aes(x = x, y = y, label = label)) +
   geom_point() +
   geom_label() +
-  geom_vline(xintercept = 2.0, color = "red") +
-  geom_vline(xintercept = 1.5, color = "blue") +
-  geom_vline(xintercept = 4.1, color = "blue") +
-  geom_vline(xintercept = 2.8, color = "yellow")
+  geom_vline(xintercept = (2.0 + 2.8) / 2, color = "red") +
+  geom_vline(xintercept = (1.5 + 2.0) / 2, color = "blue") +
+  geom_vline(xintercept = (4.1 + 5.2) / 2, color = "blue") + 
+  geom_vline(xintercept = (2.8 + 4.1) / 2, color = "yellow")
 ```
 
 ![](level3.png)
+<h3>What happen if we increase the number of observations and variables?</h3>
+
+More observations: attempt more splits in each level, able to grown a deeper tree.
+
+More variables: In each level, repeat the process of finding the best split in a single variable, then compare the ANOVA of best split in multiple variables and select the best one to split our data.  
 
 
